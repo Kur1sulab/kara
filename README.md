@@ -130,7 +130,7 @@ Windows：下 Releases 的 `kara-*-win64.zip`，解压双击 `kara.bat`（命令
 
 ```
 kara                 入口薄壳（等价 python3 -m vc.cli）
-engine-go/           引擎源码（Go）：cli/ 命令层；brute/ cve/ subdomain/ … 各能力；litmus/ 深度验证内核
+engine-go/           引擎源码（Go）：cli/ 命令层；brute/ cve/ subdomain/ identifier/ … 各能力；litmus/ 深度验证内核
 engine/sweep         引擎构建产物（gitignore，用上面的命令重建）
 pocs/                自带 YAML POC（示例 / Actuator / Nacos / Shiro 特征）
 vc/cli.py            CLI 主命令：状态 / scan / list / verify
@@ -142,7 +142,7 @@ vc/ingest.py         收件箱遍历、内容指纹增量
 vc/verify.py         复验：三层流水线入口、结论落库、人工反馈（连不上 ≠ 已消失 ≠ 三层全过）
 vc/pipeline.py       三层判定：L1 命中复核 / L2 上下文复核 / L3 最小化 PoC（不联网，prober 注入）
 vc/probe.py          探测传输层：把一次精确请求交给引擎的 replay 子命令，读回响应产物
-tests/               312 个单测
+tests/               317 个单测
 ```
 
 ```bash
