@@ -1,13 +1,14 @@
-"""kara 的四个补充子命令：diff / doctor / poc / replay。
+"""kara 的补充子命令：diff / doctor / poc / replay / identifier。
 
-为什么单独一个模块：cli.py 已经一千多行，这四条各自是独立动作，塞进主命令只会
+为什么单独一个模块：cli.py 已经一千多行，这几条各自是独立动作，塞进主命令只会
 把阅读路径拉得更长。这里只依赖标准库与本包既有模块（paths / scans），不引第三方。
 
-四条命令的定位
-    diff    两次时间窗对账：新增 / 持续 / 未再出现（复测报告第一段就要这个）
-    doctor  交付前自检：引擎 / 子命令 / 库 / POC / 报告目录 / 离网守卫
-    poc     POC 库浏览（--list / --show）；--run 会真发请求，必须显式 --yes
-    replay  单次精确请求 → 拿回「能直接粘进报告的 curl 复现串」
+几条命令的定位
+    diff        两次时间窗对账：新增 / 持续 / 未再出现（复测报告第一段就要这个）
+    doctor      交付前自检：引擎 / 子命令 / 库 / POC / 报告目录 / 离网守卫
+    poc         POC 库浏览（--list / --show）；--run 会真发请求，必须显式 --yes
+    replay      单次精确请求 → 拿回「能直接粘进报告的 curl 复现串」
+    identifier  结构化标识符检测：校验位算得通才报（逻辑在 Go 内核，这里只转发）
 """
 
 from __future__ import annotations
@@ -267,7 +268,7 @@ def collect_checks(engine: str, db_path: str, poc_dir: str = POC_DIR,
         ev, subs = _engine_subcommands(engine)
         add("ok", "引擎", f"{engine}　{ev or '（版本串读不出）'}")
         need = ["paths", "api", "cve", "fingerprint", "jsintel", "baseline",
-                "replay", "poc", "strike"]
+                "replay", "poc", "strike", "identifier"]
         missing = [s for s in need if subs and s not in subs]
         if not subs:
             add("warn", "引擎子命令", "帮助文本里没解析出子命令表（版本差异？），跳过比对")
@@ -560,6 +561,33 @@ def url_path(url: str) -> str:
     return rest[idx:].strip("/") if idx >= 0 else ""
 
 
+# ---------------------------------------------------------------- identifier
+
+def cmd_identifier(ctx: Any, args: argparse.Namespace) -> int:
+    """结构化标识符检测（身份证 / 银行卡 / 手机号 / 信用代码 / 车牌）。
+
+    判定逻辑只写一份，在引擎的 identifier 包里。Python 侧再实现一遍 GB 11643 /
+    Luhn / GB 32100，迟早会和引擎漂移，报告里就会出现「CLI 说有、引擎说没有」。
+    这里只负责找到引擎、原样转发参数、把退出码带回来。
+    """
+    engine = sc.find_engine(getattr(args, "engine", "") or "")
+    if not engine:
+        print("[!] 找不到引擎 sweep：identifier 的校验位逻辑在 Go 内核里。", file=sys.stderr)
+        print("    构建：cd engine-go && go build -o ../engine/sweep ./cmd/sweep", file=sys.stderr)
+        return 2
+    argv = [engine, "identifier", args.file]
+    if args.json:
+        argv.append("--json")
+    if args.candidates:
+        argv.append("--candidates")
+    try:
+        # 不捕获 stdout：表格/JSON 由引擎直接写到终端，管道里也能原样接走。
+        return subprocess.run(argv).returncode
+    except OSError as exc:
+        print(f"[!] 引擎启动失败: {exc}", file=sys.stderr)
+        return 2
+
+
 # ---------------------------------------------------------------- 注册
 
 def add_subparsers(sub: Any) -> None:
@@ -596,3 +624,11 @@ def add_subparsers(sub: Any) -> None:
     p.add_argument("-o", "--out", default="", help="产物目录（默认 ~/.kara/reports/replay-<时间>）")
     p.add_argument("--raw", action="store_true", help="打印 replay.json 全文（截断 4000 字）")
     p.set_defaults(func=cmd_replay)
+
+    p = sub.add_parser("identifier", help="结构化标识符：身份证/银行卡/手机号/信用代码（校验位通过才报）")
+    p.add_argument("file", nargs="?", default="-", metavar="FILE",
+                   help="待检文件；- 或省略则读 stdin")
+    p.add_argument("--json", action="store_true", help="JSON 输出（供脚本/流水线消费）")
+    p.add_argument("--candidates", action="store_true",
+                   help="连未通过校验的候选一起列（默认不输出，precision 口径不变）")
+    p.set_defaults(func=cmd_identifier)

@@ -88,7 +88,7 @@ jobs:
           Write-Host "--- 包内解释器 ---"
           .\python\python.exe -c "import sys; print(sys.version); print(sys.executable)"
           Write-Host "--- 模块导入（验证 ._pth 的 .. 生效）---"
-          .\python\python.exe -c "import vc.cli, vc.paths, vc.store, vc.parsers, vc.scans, vc.ingest; print('IMPORT-OK')"
+          .\python\python.exe -c "import vc.cli, vc.cli_extra, vc.paths, vc.store, vc.parsers, vc.scans, vc.ingest; print('IMPORT-OK')"
 
       - name: 端到端冒烟（包内解释器真跑 CLI）
         shell: pwsh

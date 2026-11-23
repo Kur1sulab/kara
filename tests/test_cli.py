@@ -1,4 +1,5 @@
-"""单一 CLI 的单测：状态页、目标归一化补丁、显示宽度、协议判定、scan/list/verify 三条命令。
+"""单一 CLI 的单测：状态页、目标归一化补丁、显示宽度、协议判定、scan/list/verify 三条主命令，
+以及 diff / doctor / poc / replay 四条补充命令（后者细则见 test_cli_extra）。
 
 不联网：HTTP 判定用 stdlib 起一个回环 server 当靶子；扫描链路用 tests.test_scans
 里那段假引擎（会写 nuclei 形状产物），验证「跑引擎 → 入账 → 列表」真的走通。

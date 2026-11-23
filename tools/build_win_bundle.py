@@ -293,7 +293,7 @@ def assemble(python_zip: Path, build_dir: Path, engine_exe: Path) -> Path:
             return f"{BUNDLE}/{rel}"
 
         for must in ("kara.bat", "python/python.exe", "python/python312._pth",
-                     "python/_sqlite3.pyd", "vc/cli.py", "vc/parsers_sweep.py", "vc/paths.py",
+                     "python/_sqlite3.pyd", "vc/cli.py", "vc/cli_extra.py", "vc/parsers_sweep.py", "vc/paths.py",
                      "tests/smoke_bundle.py", "START-HERE.txt", "engine/sweep.exe"):
             if _p(must) not in got:
                 problems.append(f"缺 {must}")

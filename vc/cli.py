@@ -1,6 +1,6 @@
 """空境 Kara —— 单入口命令行（唯一界面）。
 
-三个动词，别的一律不进命令表：
+三个主命令 + 四个补充命令，别的一律不进命令表：
 
     kara                              # 状态：引擎、库、存量
     kara scan -t <目标> [-m 模式]      # 扫（-m strike 就是深度验证）
@@ -9,6 +9,10 @@
     kara list --pipeline refuted      # 看被三层判成误报的（verified/refuted/uncertain/downgraded/unrun）
     kara verify [ID …] [--deep]       # 复验：三层流水线（L1 命中复核 → L2 → L3），--deep 用验证内核真打
     kara verify <ID> --feedback --verdict 误报|真报   # 人工回写判定（误报闭环）
+    kara diff --since <时间>          # 对账：新增 / 持续 / 未再出现（实现在 vc/cli_extra.py）
+    kara doctor                       # 交付前自检：引擎 / 子命令 / 库 / POC / 离网守卫
+    kara poc [--show/--run]           # POC 库浏览与单发（--run 需 -t + --yes）
+    kara replay -u <url>              # 单次精确请求 → 复现 curl
 
 约束：
   * 一条命令做一件事：没有子子命令、没有交互向导、没有配置文件。

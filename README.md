@@ -132,7 +132,8 @@ kara                 入口薄壳（等价 python3 -m vc.cli）
 engine-go/           引擎源码（Go）：cli/ 命令层；brute/ cve/ subdomain/ … 各能力；litmus/ 深度验证内核
 engine/sweep         引擎构建产物（gitignore，用上面的命令重建）
 pocs/                自带 YAML POC（示例 / Actuator / Nacos / Shiro 特征）
-vc/cli.py            CLI：状态 / scan / list / verify
+vc/cli.py            CLI 主命令：状态 / scan / list / verify
+vc/cli_extra.py      CLI 补充命令：diff（复测对账）/ doctor（自检）/ poc / replay
 vc/report.py         报告渲染：发现方式 / 判据 / 证据 / 复现 / 未验证项
 vc/parsers_sweep.py  引擎原生产物解析（strike/paths/api/ports/jsintel/baseline/fingerprint/brute/cve）
 vc/store.py          SQLite：去重合并 / 筛选 / 状态 / 复验结论 / 三层结论 / 误报台账 / 导出
@@ -140,7 +141,7 @@ vc/ingest.py         收件箱遍历、内容指纹增量
 vc/verify.py         复验：三层流水线入口、结论落库、人工反馈（连不上 ≠ 已消失 ≠ 三层全过）
 vc/pipeline.py       三层判定：L1 命中复核 / L2 上下文复核 / L3 最小化 PoC（不联网，prober 注入）
 vc/probe.py          探测传输层：把一次精确请求交给引擎的 replay 子命令，读回响应产物
-tests/               294 个单测
+tests/               312 个单测
 ```
 
 ```bash
