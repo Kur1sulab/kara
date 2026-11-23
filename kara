@@ -12,7 +12,13 @@
 #   kara doctor                            # 交付前自检
 #   kara poc                               # POC 库（--show / --run -t 目标 --yes）
 #   kara replay -u http://h/x              # 单次精确请求 → 复现 curl
+#   kara identifier 文件.txt                # 结构化标识符（校验位算得通才报）
 #
 # 单一 CLI 入口：不开端口、不起浏览器、没有其它界面。
+#
+# 记住调用者所在目录：下面要 cd 到仓库根，而 `kara identifier 报告.txt` 这种
+# 相对路径得按用户当时的位置解析，不能按仓库根。
+KARA_ORIG_PWD="$PWD"
+export KARA_ORIG_PWD
 cd "$HOME/tools/kara" || exit 1
 exec python3 -m vc.cli "$@"

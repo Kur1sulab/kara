@@ -575,7 +575,12 @@ def cmd_identifier(ctx: Any, args: argparse.Namespace) -> int:
         print("[!] 找不到引擎 sweep：identifier 的校验位逻辑在 Go 内核里。", file=sys.stderr)
         print("    构建：cd engine-go && go build -o ../engine/sweep ./cmd/sweep", file=sys.stderr)
         return 2
-    argv = [engine, "identifier", args.file]
+    path = args.file
+    if path != "-" and not os.path.isabs(path):
+        # 启动脚本会把 cwd 切到仓库根；用户写的相对路径要按他当时所在的目录解析，
+        # 否则 `cd ~/案件 && kara identifier 台账.txt` 会去仓库根找文件。
+        path = os.path.join(os.environ.get("KARA_ORIG_PWD") or os.getcwd(), path)
+    argv = [engine, "identifier", path]
     if args.json:
         argv.append("--json")
     if args.candidates:

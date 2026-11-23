@@ -1,7 +1,8 @@
-"""cli_extra（diff / doctor / poc / replay）的单测。
+"""cli_extra（diff / doctor / poc / replay / identifier）的单测。
 
 不联网：replay 只验参数拼装（真发请求的链路由 verify 的既有测试覆盖），
-doctor 的守卫检查用真实仓库脚本跑一次（它本身只扫文件、不建连）。
+doctor 的守卫检查用真实仓库脚本跑一次（它本身只扫文件、不建连），
+identifier 只验「参数正确转发给引擎」（校验位算法在 Go 侧的单测里）。
 """
 
 import os
@@ -150,6 +151,71 @@ class TestDoctor(unittest.TestCase):
         args = cli.build_parser().parse_args(["--engine", "/nonexistent/sweep", "doctor"])
         ctx = type("C", (), {"db": "/tmp/none.db"})()
         self.assertEqual(ex.cmd_doctor(ctx, args), 1)
+
+
+class TestIdentifier(unittest.TestCase):
+    """identifier：Python 侧只做转发，判定逻辑在 Go 引擎里。"""
+
+    def test_registered_with_flags(self):
+        args = cli.build_parser().parse_args(
+            ["identifier", "sample.txt", "--json", "--candidates"])
+        self.assertTrue(callable(getattr(args, "func", None)))
+        self.assertEqual(args.file, "sample.txt")
+        self.assertTrue(args.json)
+        self.assertTrue(args.candidates)
+
+    def test_default_reads_stdin(self):
+        args = cli.build_parser().parse_args(["identifier"])
+        self.assertEqual(args.file, "-")
+
+    def test_missing_engine_returns_2(self):
+        args = cli.build_parser().parse_args(
+            ["--engine", "/nonexistent/sweep", "identifier", "-"])
+        self.assertEqual(ex.cmd_identifier(None, args), 2)
+
+    def test_forwards_argv_verbatim(self):
+        with tempfile.TemporaryDirectory() as d:
+            eng = os.path.join(d, "sweep")
+            with open(eng, "w", encoding="utf-8") as fh:
+                fh.write("#!/bin/sh\n")
+            os.chmod(eng, 0o755)
+            args = cli.build_parser().parse_args(
+                ["--engine", eng, "identifier", "f.txt", "--json", "--candidates"])
+            seen = {}
+
+            class _R:
+                returncode = 0
+
+            old_run = ex.subprocess.run
+            old_pwd = os.environ.get("KARA_ORIG_PWD")
+            try:
+                os.environ["KARA_ORIG_PWD"] = d
+                ex.subprocess.run = lambda argv, **kw: (seen.setdefault("argv", argv), _R())[1]
+                self.assertEqual(ex.cmd_identifier(None, args), 0)
+            finally:
+                ex.subprocess.run = old_run
+                if old_pwd is None:
+                    os.environ.pop("KARA_ORIG_PWD", None)
+                else:
+                    os.environ["KARA_ORIG_PWD"] = old_pwd
+            # 相对路径按调用者目录补全（启动脚本会 cd 到仓库根，不能按仓库根算）
+            self.assertEqual(seen["argv"], [eng, "identifier", os.path.join(d, "f.txt"),
+                                            "--json", "--candidates"])
+
+    def test_stdin_dash_kept_as_is(self):
+        args = cli.build_parser().parse_args(["--engine", sys.executable, "identifier", "-"])
+        seen = {}
+
+        class _R:
+            returncode = 0
+
+        old_run = ex.subprocess.run
+        try:
+            ex.subprocess.run = lambda argv, **kw: (seen.setdefault("argv", argv), _R())[1]
+            ex.cmd_identifier(None, args)
+        finally:
+            ex.subprocess.run = old_run
+        self.assertEqual(seen["argv"][-1], "-")
 
 
 class TestRegistration(unittest.TestCase):

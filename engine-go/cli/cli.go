@@ -50,6 +50,9 @@ const helpText = `sweep — 空境 Kara 的扫描内核（Go 单文件；断网/
                                          # 单次精确请求 → replay.json（复验流水线传输层，不探测）
   sweep patchdiff -r /path/to/repo [--commit SHA|--range A..B] [--limit N] [--emit-rule f.yaml]
                                          # 补丁差分 → 变种狩猎（本地 git 仓库，零外联）
+  sweep identifier <文件|-> [--json] [--candidates]
+                                         # 结构化标识符：身份证 / 银行卡 / 手机号 / 信用代码
+                                         # （只报校验位算得通的；候选默认不输出）
   sweep report -t example.com          # 资产档案 + 证据包
   sweep version                        # 版本与构建平台自省（不发请求/不写产物）
   sweep -v | --version                 # 同上，全局形态（等价 version 子命令）
@@ -79,12 +82,13 @@ var knownCmds = map[string]bool{
 	"all": true, "subdomain": true, "verify": true,
 	"api": true, "fingerprint": true, "paths": true, "jsintel": true,
 	"portscan": true, "poc": true, "patchdiff": true, "report": true,
-	"baseline": true, // 域名暴露面基线（report §5.9；桌面第二子进程，非 Python yata.py 对齐项）
-	"strike":   true, // 深度验证（内建 litmus 内核，非只读模式的延伸）
-	"brute":    true, // 弱口令验证（协议握手，命中即停）
-	"cve":      true, // 离线 CVE 版本匹配
-	"replay":   true, // 单次精确 HTTP 请求 → replay.json（Python 三层复验流水线的传输层）
-	"version":  true, // 版本自省（Go 侧独有，Python yata.py 无对应子命令）
+	"baseline":   true, // 域名暴露面基线（report §5.9；桌面第二子进程，非 Python yata.py 对齐项）
+	"strike":     true, // 深度验证（内建 litmus 内核，非只读模式的延伸）
+	"brute":      true, // 弱口令验证（协议握手，命中即停）
+	"cve":        true, // 离线 CVE 版本匹配
+	"replay":     true, // 单次精确 HTTP 请求 → replay.json（Python 三层复验流水线的传输层）
+	"identifier": true, // 结构化标识符检测（调研总纲 §4 P1：校验位通过才报）
+	"version":    true, // 版本自省（Go 侧独有，Python yata.py 无对应子命令）
 }
 
 // Run 处理全局参数与子命令（args 不含程序名），返回进程退出码。
@@ -575,6 +579,11 @@ func dispatch(cmd string, rest []string) int {
 		// 第三轮升级：jsintel 门面在 cli/recon_cmds.go，portscan 门面
 		// （dispatchPortscan）同文件，端口步骤接线在 cli/port_step.go。
 		return dispatchRecon(cmd, rest)
+
+	case "identifier":
+		// 结构化标识符检测：纯本地、零网络，只读文件/stdin，不写产物。
+		// 注意 dispatch 收到的 rest 已经是子命令之后的参数，不能再切一刀。
+		return cmdIdentifier(rest)
 
 	case "help", "-h", "--help":
 		fmt.Print(helpText)
