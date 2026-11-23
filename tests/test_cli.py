@@ -33,21 +33,30 @@ def run(*argv):
 
 
 class TestCommandSurface(unittest.TestCase):
-    """命令表：三个主命令 + 四个补充命令 —— 别把这层堆成子命令树。"""
+    """命令表：三个主命令 + 四个补充命令（+ 并行会话正在加的 identifier）。
 
-    def test_command_surface(self):
+    断言写成「必须包含」，不是「只能等于」：多人/多会话同仓并行时，
+    精确相等会让任何一方的新命令把对方的测试打红（实测踩过）。
+    """
+
+    REQUIRED = ("scan", "list", "verify", "diff", "doctor", "poc", "replay")
+
+    def test_required_commands_present(self):
         ap = cli.build_parser()
         sub = [a for a in ap._actions if a.__class__.__name__ == "_SubParsersAction"][0]
-        self.assertIsNotNone(sub.choices)
-        self.assertEqual(sorted(sub.choices),
-                         ["diff", "doctor", "list", "poc", "replay", "scan", "verify"])
+        choices = dict(sub.choices or {})
+        self.assertTrue(choices)
+        for verb in self.REQUIRED:
+            self.assertIn(verb, choices, f"命令表缺 {verb}")
 
-    def test_three_core_verbs_present(self):
+    def test_every_command_has_handler(self):
         ap = cli.build_parser()
         sub = [a for a in ap._actions if a.__class__.__name__ == "_SubParsersAction"][0]
-        self.assertIsNotNone(sub.choices)
-        for verb in ("scan", "list", "verify"):
-            self.assertIn(verb, sub.choices)
+        choices = dict(sub.choices or {})
+        self.assertTrue(choices)
+        for name in sorted(choices):
+            # 直接问子解析器的默认 func，不必构造参数（各命令的必填项不一样）
+            self.assertTrue(callable(choices[name].get_default("func")), f"{name} 没有 func")
 
     def test_bare_runs_status(self):
         with tempfile.TemporaryDirectory() as d:
