@@ -32,12 +32,21 @@ def run(*argv):
 
 
 class TestCommandSurface(unittest.TestCase):
-    """命令表就该只有三个动词 —— 别再把功能堆成一层子命令。"""
+    """命令表：三个主命令 + 四个补充命令 —— 别把这层堆成子命令树。"""
 
-    def test_three_verbs(self):
+    def test_command_surface(self):
         ap = cli.build_parser()
         sub = [a for a in ap._actions if a.__class__.__name__ == "_SubParsersAction"][0]
-        self.assertEqual(sorted(sub.choices), ["list", "scan", "verify"])
+        self.assertIsNotNone(sub.choices)
+        self.assertEqual(sorted(sub.choices),
+                         ["diff", "doctor", "list", "poc", "replay", "scan", "verify"])
+
+    def test_three_core_verbs_present(self):
+        ap = cli.build_parser()
+        sub = [a for a in ap._actions if a.__class__.__name__ == "_SubParsersAction"][0]
+        self.assertIsNotNone(sub.choices)
+        for verb in ("scan", "list", "verify"):
+            self.assertIn(verb, sub.choices)
 
     def test_bare_runs_status(self):
         with tempfile.TemporaryDirectory() as d:

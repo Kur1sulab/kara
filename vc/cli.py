@@ -30,6 +30,7 @@ import urllib.parse
 from typing import Any, Dict, List, Optional
 
 from . import __version__
+from . import cli_extra
 from . import paths as kpaths
 from . import pipeline as pipemod
 from . import probe as probe_mod
@@ -366,6 +367,10 @@ def cmd_status(ctx: Ctx, args: argparse.Namespace) -> int:
     print("  kara scan -t <目标> [-m 模式]　扫（-m strike = 深度验证，会真发请求）")
     print("  kara list [-i 序号] [--assets] [--liveness …]　看（--csv/--md 导出）")
     print("  kara verify [--ids …] [--liveness …] [--deep]　复验")
+    print("  kara diff --since <时间> [--md 文件]　对账：新增 / 持续 / 未再出现（复测第一段）")
+    print("  kara doctor　交付前自检：引擎 / 子命令 / 库 / POC / 离网守卫")
+    print("  kara poc [--show 名] [--run 名 -t 目标 --yes]　POC 库浏览与单发")
+    print("  kara replay -u <url> [-m POST -d …]　单次精确请求 → 复现 curl")
     return 0
 
 
@@ -903,7 +908,7 @@ def _verify_deep(ctx: Ctx, rows: List[Dict[str, Any]], args: argparse.Namespace)
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         prog="kara",
-        description="空境 Kara —— 本地漏扫（单一 CLI：scan / list / verify）",
+        description="空境 Kara —— 本地漏扫（scan / list / verify；补充 diff / doctor / poc / replay）",
         epilog="不给子命令就打印状态。")
     ap.add_argument("--db", default="", help=f"库路径（默认 {kpaths.default_db_path()}）")
     ap.add_argument("--inbox", action="append", default=None, help="收件箱目录，可重复")
@@ -984,6 +989,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--intensity", default="", choices=["", "low", "normal", "high"])
     p.add_argument("--allow-public", action="store_true")
     p.set_defaults(func=cmd_verify)
+
+    cli_extra.add_subparsers(sub)
 
     ap.set_defaults(func=cmd_status)
     return ap

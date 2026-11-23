@@ -6,13 +6,17 @@ CVE 匹配 → 深度验证，扫完自动出一份**带证据与复现步骤**�
 **运行时零外联**：所有请求只发给自己给的目标，不查备案、不查 FOFA/Hunter、不查证书日志、
 不查 WHOIS、不查任何云端接口。这是产品定位，不是可选项。
 
-## 三个动词，没有第四层
+## 三个主命令 + 四个补充命令，没有第四层
 
 ```bash
 kara                             # 状态：引擎、库、存量
 kara scan -t <目标> [-m 模式]     # 扫（扫完自动生成报告）
 kara list [-i 序号] [--assets] [--liveness …]   # 看（--csv / --md 导出）
 kara verify [ID …] [--deep]      # 复验：三层流水线（L1 命中复核 → L2 上下文复核 → L3 最小化 PoC）
+kara diff --since 2026-11-20     # 对账：新增 / 持续 / 未再出现（复测报告第一段）
+kara doctor                      # 交付前自检：引擎 / 子命令 / 库 / POC / 离网守卫
+kara poc [--show 名] [--run 名 -t 目标 --yes]   # POC 库浏览与单发
+kara replay -u <url> [-m POST -d 'a=1' -H 'K: V']   # 单次精确请求 → 复现 curl
 ```
 
 ```bash

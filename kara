@@ -8,6 +8,10 @@
 #   kara verify --ids 12                   # 复验
 #   kara verify --deep --sev high           # 深度验证（真发请求）
 #   kara list --md report.md               # 导出
+#   kara diff --since 2026-11-20 --md d.md # 复测对账（新增/持续/未再出现）
+#   kara doctor                            # 交付前自检
+#   kara poc                               # POC 库（--show / --run -t 目标 --yes）
+#   kara replay -u http://h/x              # 单次精确请求 → 复现 curl
 #
 # 单一 CLI 入口：不开端口、不起浏览器、没有其它界面。
 cd "$HOME/tools/kara" || exit 1
